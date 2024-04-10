@@ -1,0 +1,29 @@
+.opening-screen:before{
+    content: "";
+    background: url("curtain2.jpeg") no-repeat center center/cover;
+    max-width: 97rem;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    z-index: -1;
+    opacity: 1.0;
+  }
+  
+  .opening-screen{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .start-btn{
+    border-radius: 20px;
+    height: 11vh;
+    width: 22vw;
+    background-color: #b6931f;
+    color: black;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border: none;
+    padding: 10px;
+  }

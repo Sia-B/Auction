@@ -1,0 +1,163 @@
+.gameBackground{
+    content: "";
+    background: url("bg4.jpeg") no-repeat center center/cover;
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    z-index: -1;
+    opacity: 1.0;
+}
+
+h1{
+    color: white;
+}
+
+.players{
+    /*display: flex;
+    justify-content: space-between;
+    position: relative;
+    min-height: 50vh;*/
+    /*display: flex;
+   justify-content: space-between;
+   align-items: flex-end;
+   height: 100%;
+   position: absolute;
+    bottom: 0;
+    display: flex;
+    width: 100%;*/
+
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between; /* Adjust as needed */
+    margin-top: 20px;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+/*.player1{
+    text-align: 'center';
+     width: '50%';
+}
+
+.player2{
+    text-align: 'center';
+     width: '50%';
+}*/
+
+/*.player1, .player2 {
+    width: 45%;
+    background-color: lightgreen;
+    padding: 20px;
+  }
+  
+  .player1 {
+    text-align: center;
+  }
+  
+  .player2 {
+    text-align: center;
+  }
+*/
+
+
+  
+  .player1, .player2 {
+    background-color: lightgreen;
+    padding: 20px;
+    width: 200px; /* Adjust width as needed */
+    margin: 0 10px;
+  }
+  .player1 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 0;
+  }
+  
+  .player2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 0;
+  }
+
+  .bid-buttons button {
+    margin-right: 2px; 
+    padding: 3px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.bid-buttons button:hover {
+  background-color: #4CAF50; /* Green color on hover */
+  color: white;
+}
+
+.bid-buttons button:active {
+  background-color: #45a049; /* Darker green color when pressed */
+}
+
+.bid-buttons button.bid {
+  background-color: #a12a40;; /* Red color for bid buttons */
+  color: white;
+}
+
+.withdraw-btn button.withdraw {
+  background-color: #008CBA; /* Blue color for withdraw button */
+  color: white;
+  border: none;
+}
+
+.bidArea {
+    /*position: absolute;
+    bottom: 12rem; /* Adjust the distance from the bottom as needed
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: white;
+    height: 50vh;
+    width: 50vw;*/
+    display: flex;
+    position: absolute;
+    bottom: 12rem;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 55vh;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 50vw;
+    align-items: center;
+  }
+
+  .start-auction{
+    width: 10rem;
+    background-color: #12050b;
+    border: none;
+    color: #894a3e;
+    padding: 10px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 12px;
+    box-shadow: 0 5px 0 #240a16;
+  }
+
+  .bid-value{
+    color:  #894a3e;
+    background-color: #12050b;
+  }
+
+  .painting-value{
+    color: white;
+    visibility: hidden;
+  }
+
+  .painting{
+    background-color: white;
+    height: 40vh;
+    width: 40vw;
+  }
