@@ -156,8 +156,12 @@ h1{
     visibility: hidden;
   }
 
-  .painting{
-    background-color: white;
+  .painting-image{
     height: 40vh;
-    width: 40vw;
+    width: 30vw;
+    border: 5px solid  #de8766;
+  }
+
+  .winner{
+    color:  #894a3e;;
   }
