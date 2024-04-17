@@ -3,6 +3,7 @@ import React from 'react'
 import './game.css'
 import PaintingItem from '../Paintings/PaintingItem'
 
+
 const Game = () => {
     const [bidValue, setBidValue] = useState(0);
     const [player1Balance, setPlayer1Balance] = useState(3000);
