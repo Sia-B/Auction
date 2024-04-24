@@ -27,3 +27,16 @@
     border: none;
     padding: 10px;
   }
+
+  .player-details{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  #player-name, #room-no{
+    border-radius: 8px;
+    height: 5vh;
+    width: 25vw;
+  }

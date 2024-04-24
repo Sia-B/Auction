@@ -2,9 +2,55 @@ import { useState, useEffect } from 'react'
 import React from 'react'
 import './game.css'
 import PaintingItem from '../Paintings/PaintingItem'
+import { useLocation } from 'react-router-dom';
+import { io } from "socket.io-client";
 
 
 const Game = () => {
+  const [socket, setSocket] = useState(null);
+  const location = useLocation();
+  const roomNo = new URLSearchParams(location.search).get('room');
+  const playerName = new URLSearchParams(location.search).get('player');
+  const [player1Name, setPlayer1Name] = useState('');
+  const [player2Name, setPlayer2Name] = useState('');
+
+  useEffect(() => {
+    let isFirstPlayer = true;
+    const newSocket = io("http://localhost:8000", {
+      autoConnect: true
+    });
+
+    // Handle socket events
+    newSocket.on("connect", () => {
+      console.log("Connected to server");
+      // Join the room when connected
+      newSocket.emit("joinRoom", { playerName, roomNo });
+    });
+
+    newSocket.on("playerJoined",  (otherPlayerName) => {
+      console.log(`${playerName} has joined the room`);
+    });
+
+    newSocket.on("currentPlayers", (playerNames) => {
+      const uniquePlayerNames = Array.from(new Set(playerNames))
+      console.log("Received current players:", uniquePlayerNames);
+      setPlayer1Name(uniquePlayerNames[0] || ''); // Set to empty string if undefined
+      setPlayer2Name(uniquePlayerNames[1] || ''); // Set to empty string if undefined
+    });
+
+    setSocket(newSocket);
+
+    // Clean up function
+    return () => {
+      // Disconnect socket when unmounting
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [roomNo, playerName]);
+
+
+
     const [bidValue, setBidValue] = useState(0);
     const [player1Balance, setPlayer1Balance] = useState(3000);
     const [player2Balance, setPlayer2Balance] = useState(3000);
@@ -16,6 +62,16 @@ const Game = () => {
     const [currentPlayer, setCurrentPlayer] = useState('player2');
     const [paintingsDisplayed, setPaintingsDisplayed] = useState(0);
   const [winner, setWinner] = useState(null);
+  //
+ 
+  //
+  /*useEffect(() => {
+    if (playerName && player1Name === '') {
+      setPlayer1Name(playerName);
+    } else {
+      setPlayer2Name(playerName);
+    }
+  }, [playerName, player1Name, player2Name]);*/
 
 
     const [showCollectionForPlayer, setShowCollectionForPlayer] = useState(null); 
@@ -137,7 +193,7 @@ const determineWinner = () => {
       </div>
         <div className="players">
             <div className="player1">
-            <h1>Player1</h1>
+            <h1>{player1Name}</h1>
             {player1Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player1')}}>Collections</button>}
             {showCollectionForPlayer === 'player1' && (
             <div className="collection-view">
@@ -159,7 +215,7 @@ const determineWinner = () => {
           <h3>Balance: ${player1Balance}</h3>
             </div>
             <div className="player2">
-            <h1>Player2</h1>
+            <h1>{player2Name}</h1>
           {player2Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player2')}}>Collections</button>}
           {showCollectionForPlayer === 'player2' && (
             <div className="collection-view">
