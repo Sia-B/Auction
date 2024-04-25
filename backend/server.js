@@ -6,44 +6,35 @@ const io = new Server(httpServer, {
   cors: "http://localhost:3000/"
 });
 
-const rooms = {};
+const rooms = {}
 
 io.on("connection", (socket) => {
   console.log("New user joined" + socket.id);
 
   socket.on("joinRoom", ({ playerName, roomNo }) => {
-    if (!rooms[roomNo]) {
-      // Create a new room if it doesn't exist
+    console.log(`${playerName} joined room ${roomNo}`);
+    socket.join(roomNo)
+    if(!rooms[roomNo]){
       rooms[roomNo] = {
-        players: [],
-        inProgress: false // You can add more properties like game status
-      };
+        players: []
+      }
     }
+    const playerRole = rooms[roomNo].players.length === 0? 'player1':'player2'
+    rooms[roomNo].players.push({id: socket.id, name: playerName, role: playerRole})
+    console.log(rooms[23])
 
-    socket.join(roomNo);
-    rooms[roomNo].players.push({ id: socket.id, name: playerName });
+    io.to(roomNo).emit("currentPlayers", rooms[roomNo].players.map(player => ({name: player.name, role:player.role})))
+    // You can implement logic here to handle the joining of the room, such as storing player information, emitting events to other clients in the room, etc.
+  }); 
 
-    // Notify the client that they have successfully joined the room
-    socket.emit("roomJoined", roomNo);
+  socket.on("startAuction", ({playerName, roomNo})=>{
+    console.log(playerName, "Clicked from", roomNo)
+  })
 
-    // Send the current player names to all players in the room
-    const currentPlayerNames = rooms[roomNo].players.map(player => player.name);
-    console.log(currentPlayerNames)
-    io.to(roomNo).emit("currentPlayers", currentPlayerNames);
-
-    // Notify other players in the room about the new player
-    socket.broadcast.to(roomNo).emit("playerJoined", playerName);
-
-    socket.on("startAuction", (roomNo) => {
-      io.to(roomNo).emit("startAuction");
-    });
-  
-    socket.on("generatePainting", ({ roomNo, paintingValue, paintingId }) => {
-      io.to(roomNo).emit("paintingGenerated", { paintingValue, paintingId });
-    });
+})
 
 
-  });
-});
+
+
 
 httpServer.listen(8000);

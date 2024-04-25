@@ -1,44 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import React from 'react'
 import './game.css'
 import PaintingItem from '../Paintings/PaintingItem'
 import { useLocation } from 'react-router-dom';
 import { io } from "socket.io-client";
+import StartGameContext from '../../components/StartGameButton/StartGameContext'
 
 
 const Game = () => {
+  const {playerName, roomNo, setPlayerName, setRoomNo} = useContext(StartGameContext)
   const [socket, setSocket] = useState(null);
-  const location = useLocation();
-  const roomNo = new URLSearchParams(location.search).get('room');
-  const playerName = new URLSearchParams(location.search).get('player');
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
 
+  const isMounted = useRef(false)
+
   useEffect(() => {
-    let isFirstPlayer = true;
+    console.log("Game mounted")
+    /*console.log(playerName, roomNo)*/
+    if (!isMounted.current) {
     const newSocket = io("http://localhost:8000", {
       autoConnect: true
+    
     });
 
-    // Handle socket events
     newSocket.on("connect", () => {
-      console.log("Connected to server");
-      // Join the room when connected
-      newSocket.emit("joinRoom", { playerName, roomNo });
+      console.log("Socket connected");
+      if (playerName && roomNo) {
+        newSocket.emit("joinRoom", { playerName, roomNo }); // Emit event with playerName and roomNo
+      } else {
+        console.error("Player name or room number not provided.");
+      }
     });
-
-    newSocket.on("playerJoined",  (otherPlayerName) => {
-      console.log(`${playerName} has joined the room`);
-    });
-
-    newSocket.on("currentPlayers", (playerNames) => {
-      const uniquePlayerNames = Array.from(new Set(playerNames))
-      console.log("Received current players:", uniquePlayerNames);
-      setPlayer1Name(uniquePlayerNames[0] || ''); // Set to empty string if undefined
-      setPlayer2Name(uniquePlayerNames[1] || ''); // Set to empty string if undefined
+      newSocket.on("currentPlayers", (data) => {
+        console.log("current players:", data)
+        try {
+          if (Array.isArray(data) && data.length > 0) {
+            data.forEach(player => {
+              if (player.name && player.role) {
+                if (player.role === 'player1') {
+                  setPlayer1Name(player.name);
+                } else if (player.role === 'player2') {
+                  setPlayer2Name(player.name);
+                }
+              } else {
+                console.error("Invalid player data:", player);
+              }
+            });
+          } else {
+            console.error("Invalid data format or empty data array:", data);
+          }
+        } catch (error) {
+          console.error("Error processing player data:", error);
+        }
+      
+    
+   
+      
     });
 
     setSocket(newSocket);
+    isMounted.current = true
 
     // Clean up function
     return () => {
@@ -46,8 +68,9 @@ const Game = () => {
       if (socket) {
         socket.disconnect();
       }
+      }
     };
-  }, [roomNo, playerName]);
+  }, [socket]);
 
 
 
@@ -133,6 +156,7 @@ const determineWinner = () => {
 
   const startAuction = () => {
     setAuctionStarted(true);
+    socket.emit("startAuction", {playerName, roomNo})
     generatePainting();
     setWinner(null)
     setPlayer1Balance(3000)
