@@ -66,10 +66,32 @@ io.on("connection", (socket) => {
       }
       io.to(roomNo).emit('updatePlayerData', { player: 'player1', balance: rooms[roomNo].player1Balance, paintings: rooms[roomNo].player1Paintings });
       io.to(roomNo).emit('updatePlayerData', { player: 'player2', balance: rooms[roomNo].player2Balance, paintings: rooms[roomNo].player2Paintings });
+      if (rooms[roomNo].player1Paintings.length === 9 && rooms[roomNo].player2Paintings.length === 9) {
+        determineWinnerAndBroadcast(roomNo);
+      }
     }
   })
 
+  const determineWinnerAndBroadcast = (roomNo) => {
+    const player1PaintingValue = rooms[roomNo].player1Paintings.reduce((acc, painting) => acc + painting.value, 0);
+    const player2PaintingValue = rooms[roomNo].player2Paintings.reduce((acc, painting) => acc + painting.value, 0);
+    const player1Total = rooms[roomNo].player1Balance + player1PaintingValue;
+    const player2Total = rooms[roomNo].player2Balance + player2PaintingValue;
+
+    let winner;
+    if (player1Total > player2Total) {
+      winner = "player1";
+    } else if (player2Total > player1Total) {
+      winner = "player2";
+    } else {
+      winner = "draw";
+    }
+
+    io.to(roomNo).emit("gameResult", { winner });
+  }
+  
 })
+
 
 
 

@@ -130,10 +130,14 @@ const Game = () => {
     // Update the state and emit player data to the server
     if (player === 'player1') {
       setPlayer1Balance(newBalance);
+      if(player1Paintings && player1Paintings.length != 0 ){
       setPlayer1Paintings([...player1Paintings, { id: paintingId, value: randomValue }]);
+      }
     } else if (player === 'player2') {
       setPlayer2Balance(newBalance);
+      if(player2Paintings && player2Paintings.length != 0 ){
       setPlayer2Paintings([...player2Paintings, { id: paintingId, value: randomValue }]);
+      }
     }
     setBidValue(0);
   
@@ -156,10 +160,10 @@ const Game = () => {
   
     setPaintingsDisplayed(paintingsDisplayed + 1);
   
-    if (paintingsDisplayed === 9) {
+    /*if (paintingsDisplayed === 9) {
       determineWinner();
       setAuctionStarted(false);
-    }
+    }*/
 
 }
 useEffect(() => {
@@ -179,7 +183,7 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
   }
 })
   
-const determineWinner = () => {
+/*const determineWinner = () => {
   const player1PaintingValue = player1Paintings.reduce((acc, painting) => acc + painting.value, 0);
   const player2PaintingValue = player2Paintings.reduce((acc, painting) => acc + painting.value, 0);
   const player1Total = player1Balance + player1PaintingValue;
@@ -191,7 +195,11 @@ const determineWinner = () => {
   } else {
     setWinner('draw');
   }
-};
+  socket.emit('gameResult', { winner });
+};*/
+ socket?.on("gameResult", ({ winner }) => {
+  setWinner(winner);
+});
 
   const startAuction = () => {
     
