@@ -102,11 +102,19 @@ const Game = () => {
 
 
   const handleBid = (amount) => {
-    setBidValue(bidValue + amount);
-    const cplayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-    setCurrentPlayer(cplayer)
-
+    const newTotalBidValue = bidValue + amount; // Calculate the new total bid value
+    setBidValue(newTotalBidValue)
+    socket.emit('placeBid', { playerName, roomNo, amount: newTotalBidValue });
+   setCurrentPlayer(currentPlayer === 'player1' ? 'player2':"player1")
   };
+  useEffect(() => {
+    if (socket) {
+      socket.on("updateBid", ({ playerName, amount }) => {
+        setCurrentPlayer(playerName);
+        setBidValue(amount)
+      });
+    }
+  }, [socket])
 
   const generatePainting = (player) => {
     const min = 100;
@@ -155,9 +163,14 @@ const determineWinner = () => {
 };
 
   const startAuction = () => {
-    setAuctionStarted(true);
-    socket.emit("startAuction", {playerName, roomNo})
-    generatePainting();
+    
+    socket.emit("startAuction", { playerName, roomNo })
+    socket.on("bothPlayersStartedAuction", () => {
+      generatePainting();
+      setAuctionStarted(true);
+      console.log("both player ready")
+    })
+    /*generatePainting();*/
     setWinner(null)
     setPlayer1Balance(3000)
     setPlayer2Balance(3000)
