@@ -122,31 +122,62 @@ const Game = () => {
     const randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
     setPaintingValue(randomValue);
     const newId = (paintingId % 15) + 1;
-  setPaintingId(newId);
-    /*const randomId = Math.floor(Math.random() * 15) + 1;
-    setPaintingId(randomId);*/
-   const cplayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-   const newBalance = player === 'player1' ? player2Balance - bidValue : player1Balance - bidValue;
-
-  // Update the state
-  if (player === 'player1') {
-    setPlayer2Balance(newBalance);
-     setPlayer2Paintings([...player2Paintings, { id: paintingId, value: randomValue }]);
-     console.log(player2Paintings)
-  } else if (player === 'player2') {
-    setPlayer1Balance(newBalance);
-    setPlayer1Paintings([...player1Paintings, { id: paintingId, value: randomValue }]);
-    console.log(player1Paintings)
-  }
-  setBidValue(0)
-  setCurrentPlayer(cplayer)
-  setPaintingsDisplayed(paintingsDisplayed + 1);
-  if (paintingsDisplayed === 9) {
-    determineWinner();
-    setAuctionStarted(false)
+    setPaintingId(newId);
     
-  }
+    const currentPlayerBalance = player === 'player1' ? player1Balance : player2Balance;
+    const newBalance = currentPlayerBalance - bidValue;
+  
+    // Update the state and emit player data to the server
+    if (player === 'player1') {
+      setPlayer1Balance(newBalance);
+      setPlayer1Paintings([...player1Paintings, { id: paintingId, value: randomValue }]);
+    } else if (player === 'player2') {
+      setPlayer2Balance(newBalance);
+      setPlayer2Paintings([...player2Paintings, { id: paintingId, value: randomValue }]);
+    }
+    setBidValue(0);
+  
+    // Emit player data to the server
+    if(player === currentPlayer){
+      console.log("sendplayerdata being emitted")
+    socket.emit('sendPlayerData', {
+      roomNo,
+      player,
+      balance: newBalance,
+      paintings: player === 'player1' ? [...player1Paintings, { id: paintingId, value: randomValue }] : [...player2Paintings, { id: paintingId, value: randomValue }]
+    });
+    }
+    // Update the state locally
+    /*if (player === 'player1') {
+      setCurrentPlayer('player2');
+    } else {
+      setCurrentPlayer('player1');
+    }*/
+  
+    setPaintingsDisplayed(paintingsDisplayed + 1);
+  
+    if (paintingsDisplayed === 9) {
+      determineWinner();
+      setAuctionStarted(false);
+    }
+
 }
+useEffect(() => {
+  if (socket) {
+
+socket.on('updatePlayerData', ({ player, balance, paintings }) => {
+  if (player === 'player1') {
+    setPlayer1Balance(balance);
+    setPlayer1Paintings(paintings);
+    setCurrentPlayer(player)
+  } else if (player === 'player2') {
+    setPlayer2Balance(balance);
+    setPlayer2Paintings(paintings);
+    setCurrentPlayer(player)
+  }
+});
+  }
+})
   
 const determineWinner = () => {
   const player1PaintingValue = player1Paintings.reduce((acc, painting) => acc + painting.value, 0);
@@ -187,15 +218,6 @@ const determineWinner = () => {
     setCurrentPaintingIndex(0); // Reset the current painting index when closing the collection
   };
 
-  /*const nextPainting = () => {
-    setCurrentPaintingIndex((prevIndex) => (prevIndex + 1) % (player1Paintings.length || player2Paintings.length));
-    console.log(currentPaintingIndex)
-  };
-
-  const previousPainting = () => {
-    setCurrentPaintingIndex((prevIndex) => (prevIndex - 1 + (player1Paintings.length || player2Paintings.length)) % (player1Paintings.length || player2Paintings.length));
-    console.log(currentPaintingIndex)
-  };*/
   const nextPainting = () => {
     setCurrentPaintingIndex((prevIndex) => (prevIndex + 1) % (showCollectionForPlayer === 'player1' ? player1Paintings.length : player2Paintings.length));
   };
@@ -231,7 +253,7 @@ const determineWinner = () => {
         <div className="players">
             <div className="player1">
             <h1>{player1Name}</h1>
-            {player1Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player1')}}>Collections</button>}
+            {player1Paintings && player1Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player1')}}>Collections</button>}
             {showCollectionForPlayer === 'player1' && (
             <div className="collection-view">
               <button className="close-button" onClick={()=>{closeCollection('player1')}}>Close</button>
@@ -253,7 +275,7 @@ const determineWinner = () => {
             </div>
             <div className="player2">
             <h1>{player2Name}</h1>
-          {player2Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player2')}}>Collections</button>}
+          {player2Paintings && player2Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player2')}}>Collections</button>}
           {showCollectionForPlayer === 'player2' && (
             <div className="collection-view">
               <button className="close-button" onClick={()=>{closeCollection('player2')}}>Close</button>

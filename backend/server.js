@@ -53,6 +53,21 @@ io.on("connection", (socket) => {
     io.to(roomNo).emit('updateBid', { playerName: nextPlayer, amount })
   })
 
+  socket.on('sendPlayerData', ({ roomNo, player, balance, paintings }) => {
+    console.log(player, balance, "paintings:",paintings)
+    const otherPlayer = player === 'player1' ? 'player2' : 'player1';
+    if (rooms[roomNo]) {
+      if (player === 'player1') {
+        rooms[roomNo].player2Balance = balance;
+        rooms[roomNo].player2Paintings = paintings;
+      } else {
+        rooms[roomNo].player1Balance = balance;
+        rooms[roomNo].player1Paintings = paintings;
+      }
+      io.to(roomNo).emit('updatePlayerData', { player: 'player1', balance: rooms[roomNo].player1Balance, paintings: rooms[roomNo].player1Paintings });
+      io.to(roomNo).emit('updatePlayerData', { player: 'player2', balance: rooms[roomNo].player2Balance, paintings: rooms[roomNo].player2Paintings });
+    }
+  })
 
 })
 
