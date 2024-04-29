@@ -13,6 +13,18 @@ const Game = () => {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
 
+  const [bidValue, setBidValue] = useState(0);
+    const [player1Balance, setPlayer1Balance] = useState(3000);
+    const [player2Balance, setPlayer2Balance] = useState(3000);
+    const [paintingValue, setPaintingValue] = useState(null);
+  const [auctionStarted, setAuctionStarted] = useState(false);
+   const [paintingId, setPaintingId] = useState(0);
+   const [player1Paintings, setPlayer1Paintings] = useState([]);
+    const [player2Paintings, setPlayer2Paintings] = useState([]);
+    const [currentPlayer, setCurrentPlayer] = useState('player2');
+    const [paintingsDisplayed, setPaintingsDisplayed] = useState(0);
+  const [winner, setWinner] = useState(null);
+
   const isMounted = useRef(false)
 
   useEffect(() => {
@@ -74,17 +86,7 @@ const Game = () => {
 
 
 
-    const [bidValue, setBidValue] = useState(0);
-    const [player1Balance, setPlayer1Balance] = useState(3000);
-    const [player2Balance, setPlayer2Balance] = useState(3000);
-    const [paintingValue, setPaintingValue] = useState(null);
-  const [auctionStarted, setAuctionStarted] = useState(false);
-   const [paintingId, setPaintingId] = useState(0);
-   const [player1Paintings, setPlayer1Paintings] = useState([]);
-    const [player2Paintings, setPlayer2Paintings] = useState([]);
-    const [currentPlayer, setCurrentPlayer] = useState('player2');
-    const [paintingsDisplayed, setPaintingsDisplayed] = useState(0);
-  const [winner, setWinner] = useState(null);
+    
   //
  
   //
@@ -121,34 +123,64 @@ const Game = () => {
     const max = 500;
     const randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
     setPaintingValue(randomValue);
-    const newId = (paintingId % 15) + 1;
+    const minId = 1; // Minimum painting ID
+  const maxId = 9; // Maximum painting ID
+  const newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
     setPaintingId(newId);
     
-    const currentPlayerBalance = player === 'player1' ? player1Balance : player2Balance;
+    const currentPlayerBalance = player === 'player1' ? player2Balance : player1Balance;
     const newBalance = currentPlayerBalance - bidValue;
+    console.log("newbalance", newBalance)
   
     // Update the state and emit player data to the server
     if (player === 'player1') {
       setPlayer1Balance(newBalance);
-      if(player1Paintings && player1Paintings.length != 0 ){
+      if(player1Paintings && player1Paintings.length !== 0 ){
       setPlayer1Paintings([...player1Paintings, { id: paintingId, value: randomValue }]);
       }
     } else if (player === 'player2') {
       setPlayer2Balance(newBalance);
-      if(player2Paintings && player2Paintings.length != 0 ){
+      if(player2Paintings && player2Paintings.length !== 0 ){
       setPlayer2Paintings([...player2Paintings, { id: paintingId, value: randomValue }]);
       }
     }
-    setBidValue(0);
+
+    socket.emit('newPainting', {
+      roomNo,
+      paintingId: newId,
+      paintingValue: randomValue
+    });
+    
+    socket.on('receiveNewPainting', ({ paintingId, paintingValue }) => {
+      // Update the UI with the new painting information
+      setPaintingId(paintingId);
+      setPaintingValue(paintingValue);
+
+      // Dynamically import the image based on the new painting id
+      import(`../../paintings/painting${paintingId}.jpeg`)
+        .then((image) => {
+          // Set the image source once it's loaded
+          setImageSrc(image.default);
+        })
+        .catch((error) => {
+          console.error('Error loading image:', error);
+        });
+    });
   
     // Emit player data to the server
-    if(player === currentPlayer){
-      console.log("sendplayerdata being emitted")
+    if(player){
+      console.log("newB",newBalance)
     socket.emit('sendPlayerData', {
       roomNo,
       player,
-      balance: newBalance,
-      paintings: player === 'player1' ? [...player1Paintings, { id: paintingId, value: randomValue }] : [...player2Paintings, { id: paintingId, value: randomValue }]
+      balance: {
+        player1: player === 'player1' ? player1Balance: newBalance,
+        player2: player === 'player2' ? player2Balance: newBalance
+      },
+      paintings: {
+        player1: player === 'player2' ? [...player1Paintings, { id: newId, value: randomValue }] : [...player1Paintings],
+        player2: player === 'player1' ? [...player2Paintings, { id: newId, value: randomValue }] : [...player2Paintings]
+      },
     });
     }
     // Update the state locally
@@ -157,8 +189,12 @@ const Game = () => {
     } else {
       setCurrentPlayer('player1');
     }*/
-  
+    socket.emit('placeBid', { playerName, roomNo, amount: 0 });
+    /*setBidValue(0);*/
     setPaintingsDisplayed(paintingsDisplayed + 1);
+    if (paintingsDisplayed === 9) {
+      socket.emit('requestWinnerDetermination', roomNo);
+    }
   
     /*if (paintingsDisplayed === 9) {
       determineWinner();
@@ -169,15 +205,17 @@ const Game = () => {
 useEffect(() => {
   if (socket) {
 
-socket.on('updatePlayerData', ({ player, balance, paintings }) => {
+socket.on('updatePlayerData', ({ player, balance, paintings, bidBalance }) => {
   if (player === 'player1') {
     setPlayer1Balance(balance);
     setPlayer1Paintings(paintings);
     setCurrentPlayer(player)
+    setBidValue(bidBalance)
   } else if (player === 'player2') {
     setPlayer2Balance(balance);
     setPlayer2Paintings(paintings);
     setCurrentPlayer(player)
+    setBidValue(bidBalance)
   }
 });
   }
@@ -236,7 +274,7 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
 
   const [imageSrc, setImageSrc] = useState(null);
   
-    useEffect(() => {
+    /*useEffect(() => {
       // Dynamically import the image based on the painting id
       import(`../../paintings/painting${paintingId}.jpeg`)
         .then((image) => {
@@ -246,7 +284,7 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
         .catch((error) => {
           console.error('Error loading image:', error);
         });
-    }, [paintingId]);
+    }, [paintingId]);*/
 
 
   return (
@@ -262,7 +300,7 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
             <div className="player1">
             <h1>{player1Name}</h1>
             {player1Paintings && player1Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player1')}}>Collections</button>}
-            {showCollectionForPlayer === 'player1' && (
+            {showCollectionForPlayer === 'player1' && player1Paintings.length > 0 && (
             <div className="collection-view">
               <button className="close-button" onClick={()=>{closeCollection('player1')}}>Close</button>
               <button className="arrow-button" onClick={previousPainting}>&lt;</button>
@@ -272,9 +310,9 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
           )}
             <input type="text" name="player1-bid" id="player1-bid" />
             <div className="bid-buttons">
-             <button className='bid' onClick={() => handleBid(1)} disabled={currentPlayer !== 'player1' || auctionStarted === 'false'}>Bid $1</button>
-             <button className='bid' onClick={() => handleBid(10)} disabled={currentPlayer !== 'player1' || auctionStarted === 'false'}>Bid $10</button>
-             <button className='bid' onClick={() => handleBid(100)} disabled={currentPlayer !== 'player1'|| auctionStarted === 'false'}>Bid $100</button>
+             <button className='bid' onClick={() => handleBid(1)} disabled={currentPlayer !== 'player1' || auctionStarted === false || playerName !== player1Name}>Bid $1</button>
+             <button className='bid' onClick={() => handleBid(10)} disabled={currentPlayer !== 'player1' || auctionStarted === false || playerName !== player1Name}>Bid $10</button>
+             <button className='bid' onClick={() => handleBid(100)} disabled={currentPlayer !== 'player1'|| auctionStarted === false || playerName !== player1Name}>Bid $100</button>
             </div>
             <div className="withdraw-btn">
             <button className='withdraw' onClick={()=>{generatePainting('player1')}}>Withdraw</button>
@@ -284,7 +322,7 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
             <div className="player2">
             <h1>{player2Name}</h1>
           {player2Paintings && player2Paintings.length !==0 && <button className="collection-button" onClick={()=>{openCollection('player2')}}>Collections</button>}
-          {showCollectionForPlayer === 'player2' && (
+          {showCollectionForPlayer === 'player2' && player2Paintings.length > 0 && (
             <div className="collection-view">
               <button className="close-button" onClick={()=>{closeCollection('player2')}}>Close</button>
               <button className="arrow-button" onClick={previousPainting}>&lt;</button>
@@ -294,9 +332,9 @@ socket.on('updatePlayerData', ({ player, balance, paintings }) => {
           )}
             <input type="text" name="player2-bid" id="player2-bid" />
             <div className="bid-buttons">
-             <button className='bid' onClick={() => handleBid(1)}  disabled={currentPlayer !== 'player2' || auctionStarted === 'false'}>Bid $1</button>
-             <button className='bid' onClick={() => handleBid(10)} disabled={currentPlayer !== 'player2' || auctionStarted === 'false'}>Bid $10</button>
-             <button className='bid' onClick={() => handleBid(100)} disabled={currentPlayer !== 'player2' || auctionStarted === 'false'}>Bid $100</button>
+             <button className='bid' onClick={() => handleBid(1)}  disabled={currentPlayer !== 'player2' || auctionStarted === false || playerName !== player2Name}>Bid $1</button>
+             <button className='bid' onClick={() => handleBid(10)} disabled={currentPlayer !== 'player2' || auctionStarted === false || playerName !== player2Name}>Bid $10</button>
+             <button className='bid' onClick={() => handleBid(100)} disabled={currentPlayer !== 'player2' || auctionStarted === false || playerName !== player2Name}>Bid $100</button>
             </div>
             <div className="withdraw-btn">
             <button className='withdraw' onClick={()=>{generatePainting('player2')}}>Withdraw</button>

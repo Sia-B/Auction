@@ -43,7 +43,6 @@ io.on("connection", (socket) => {
     }
   })
   socket.on('placeBid', ({ playerName, roomNo, amount }) => {
-    console.log(playerName, "Has bid", amount)
     const room = rooms[roomNo];
     const currentPlayer = room.players.find(player => player.name === playerName);
     const nextPlayer = currentPlayer.role === 'player1' ? 'player2' : 'player1';
@@ -54,24 +53,37 @@ io.on("connection", (socket) => {
   })
 
   socket.on('sendPlayerData', ({ roomNo, player, balance, paintings }) => {
-    console.log(player, balance, "paintings:",paintings)
+    console.log(balance)
     const otherPlayer = player === 'player1' ? 'player2' : 'player1';
+    const bidBalance = 0;
     if (rooms[roomNo]) {
-      if (player === 'player1') {
-        rooms[roomNo].player2Balance = balance;
-        rooms[roomNo].player2Paintings = paintings;
-      } else {
-        rooms[roomNo].player1Balance = balance;
-        rooms[roomNo].player1Paintings = paintings;
-      }
-      io.to(roomNo).emit('updatePlayerData', { player: 'player1', balance: rooms[roomNo].player1Balance, paintings: rooms[roomNo].player1Paintings });
-      io.to(roomNo).emit('updatePlayerData', { player: 'player2', balance: rooms[roomNo].player2Balance, paintings: rooms[roomNo].player2Paintings });
-      if (rooms[roomNo].player1Paintings.length === 9 && rooms[roomNo].player2Paintings.length === 9) {
-        determineWinnerAndBroadcast(roomNo);
-      }
+        /*if (player === 'player1') {
+            rooms[roomNo].player2Balance = balance;
+            rooms[roomNo].player2Paintings = paintings;
+        } else {
+            rooms[roomNo].player1Balance = balance;
+            rooms[roomNo].player1Paintings = paintings;
+        }*/rooms[roomNo][`${otherPlayer}Balance`] = balance[otherPlayer];
+    rooms[roomNo][`${otherPlayer}Paintings`] = paintings[otherPlayer];
+    rooms[roomNo][`${player}Balance`] = balance[player];
+    rooms[roomNo][`${player}Paintings`] = paintings[player];
+
+        console.log("Player1paintingsB:", rooms[roomNo].player1Paintings, "Balance:", rooms[roomNo].player1Balance)
+        console.log("Player2paintingsB:", rooms[roomNo].player2Paintings, "Balance:", rooms[roomNo].player2Balance)
+
+        io.to(roomNo).emit('updatePlayerData', { player: 'player1', balance: rooms[roomNo].player1Balance, paintings: rooms[roomNo].player1Paintings, bidBalance });
+        io.to(roomNo).emit('updatePlayerData', { player: 'player2', balance: rooms[roomNo].player2Balance, paintings: rooms[roomNo].player2Paintings, bidBalance });
+        if (rooms[roomNo].player1Paintings && rooms[roomNo].player1Paintings.length === 9 && rooms[roomNo].player2Paintings && rooms[roomNo].player2Paintings.length === 9) {
+            determineWinnerAndBroadcast(roomNo);
+        }
     }
+    
   })
 
+  socket.on('requestWinnerDetermination', (roomNo) => {
+    determineWinnerAndBroadcast(roomNo);
+  });
+  
   const determineWinnerAndBroadcast = (roomNo) => {
     const player1PaintingValue = rooms[roomNo].player1Paintings.reduce((acc, painting) => acc + painting.value, 0);
     const player2PaintingValue = rooms[roomNo].player2Paintings.reduce((acc, painting) => acc + painting.value, 0);
@@ -90,6 +102,11 @@ io.on("connection", (socket) => {
     io.to(roomNo).emit("gameResult", { winner });
   }
   
+  
+  socket.on('newPainting', ({ roomNo, paintingId, paintingValue }) => {
+    // Broadcast the new painting to all players in the room
+    io.to(roomNo).emit('receiveNewPainting', { paintingId, paintingValue });
+  })
 })
 
 
