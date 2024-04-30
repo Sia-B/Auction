@@ -52,7 +52,7 @@ io.on("connection", (socket) => {
     io.to(roomNo).emit('updateBid', { playerName: nextPlayer, amount })
   })
 
-  socket.on('sendPlayerData', ({ roomNo, player, balance, paintings }) => {
+  socket.on('sendPlayerData', ({ roomNo, player, balance, paintings, usedPaintingIds}) => {
     console.log(balance)
     const otherPlayer = player === 'player1' ? 'player2' : 'player1';
     const bidBalance = 0;
@@ -73,15 +73,19 @@ io.on("connection", (socket) => {
 
         io.to(roomNo).emit('updatePlayerData', { player: 'player1', balance: rooms[roomNo].player1Balance, paintings: rooms[roomNo].player1Paintings, bidBalance });
         io.to(roomNo).emit('updatePlayerData', { player: 'player2', balance: rooms[roomNo].player2Balance, paintings: rooms[roomNo].player2Paintings, bidBalance });
-        if (rooms[roomNo].player1Paintings && rooms[roomNo].player1Paintings.length === 9 && rooms[roomNo].player2Paintings && rooms[roomNo].player2Paintings.length === 9) {
+        /*if (rooms[roomNo].player1Paintings && rooms[roomNo].player1Paintings.length === 9 && rooms[roomNo].player2Paintings && rooms[roomNo].player2Paintings.length === 9) {
             determineWinnerAndBroadcast(roomNo);
-        }
+        }*/
+        /*if (usedPaintingIds.length === 9) {
+            determineWinnerAndBroadcast(roomNo)
+        }*/
     }
     
   })
 
   socket.on('requestWinnerDetermination', (roomNo) => {
-    determineWinnerAndBroadcast(roomNo);
+    /*determineWinnerAndBroadcast(roomNo);*/
+    console.log("Req winner called")
   });
   
   const determineWinnerAndBroadcast = (roomNo) => {
@@ -101,6 +105,7 @@ io.on("connection", (socket) => {
 
     io.to(roomNo).emit("gameResult", { winner });
   }
+  
   
   
   socket.on('newPainting', ({ roomNo, paintingId, paintingValue }) => {

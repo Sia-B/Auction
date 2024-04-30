@@ -12,6 +12,7 @@ const Game = () => {
   const [socket, setSocket] = useState(null);
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
+  const [usedPaintingIds, setUsedPaintingIds] = useState([])
 
   const [bidValue, setBidValue] = useState(0);
     const [player1Balance, setPlayer1Balance] = useState(3000);
@@ -123,10 +124,20 @@ const Game = () => {
     const max = 500;
     const randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
     setPaintingValue(randomValue);
-    const minId = 1; // Minimum painting ID
+    const minId = 0; // Minimum painting ID
   const maxId = 9; // Maximum painting ID
-  const newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
-    setPaintingId(newId);
+  /*const newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
+    setPaintingId(newId);*/
+      // Keep generating until a unique painting ID is found
+      let newId
+  do {
+    newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
+  } while (usedPaintingIds.includes(newId)); // Ensure the ID is unique
+
+  // Once a unique ID is found, add it to the list of used IDs
+  console.log(newId)
+  setUsedPaintingIds(prevIds => [...prevIds, newId])
+  setPaintingId(newId);
     
     const currentPlayerBalance = player === 'player1' ? player2Balance : player1Balance;
     const newBalance = currentPlayerBalance - bidValue;
@@ -166,6 +177,8 @@ const Game = () => {
           console.error('Error loading image:', error);
         });
     });
+
+    
   
     // Emit player data to the server
     if(player){
@@ -181,6 +194,7 @@ const Game = () => {
         player1: player === 'player2' ? [...player1Paintings, { id: newId, value: randomValue }] : [...player1Paintings],
         player2: player === 'player1' ? [...player2Paintings, { id: newId, value: randomValue }] : [...player2Paintings]
       },
+      usedPaintingIds
     });
     }
     // Update the state locally
@@ -191,11 +205,15 @@ const Game = () => {
     }*/
     socket.emit('placeBid', { playerName, roomNo, amount: 0 });
     /*setBidValue(0);*/
-    setPaintingsDisplayed(paintingsDisplayed + 1);
+    /*setPaintingsDisplayed(paintingsDisplayed + 1);
     if (paintingsDisplayed === 9) {
       socket.emit('requestWinnerDetermination', roomNo);
+    }*/
+    console.log(usedPaintingIds, "length:", usedPaintingIds.length)
+    if (usedPaintingIds.length == 2) {
+      // Emit event to the server to trigger the determination of the winner
+      socket.emit('requestWinnerDetermination', roomNo);
     }
-  
     /*if (paintingsDisplayed === 9) {
       determineWinner();
       setAuctionStarted(false);
