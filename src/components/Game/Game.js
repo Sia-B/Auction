@@ -130,21 +130,22 @@ const Game = () => {
     setPaintingId(newId);*/
       // Keep generating until a unique painting ID is found
       let newId
-  do {
-    newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
-  } while (usedPaintingIds.includes(newId)); // Ensure the ID is unique
+      do {
+        newId = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
+      } while (usedPaintingIds.includes(newId)) // Ensure the ID is unique
 
   // Once a unique ID is found, add it to the list of used IDs
   console.log(newId)
-  setUsedPaintingIds(prevIds => [...prevIds, newId])
+  setUsedPaintingIds([...usedPaintingIds, newId])
   setPaintingId(newId);
+  console.log(usedPaintingIds)
     
     const currentPlayerBalance = player === 'player1' ? player2Balance : player1Balance;
     const newBalance = currentPlayerBalance - bidValue;
     console.log("newbalance", newBalance)
   
     // Update the state and emit player data to the server
-    if (player === 'player1') {
+    /*if (player === 'player1') {
       setPlayer1Balance(newBalance);
       if(player1Paintings && player1Paintings.length !== 0 ){
       setPlayer1Paintings([...player1Paintings, { id: paintingId, value: randomValue }]);
@@ -154,18 +155,20 @@ const Game = () => {
       if(player2Paintings && player2Paintings.length !== 0 ){
       setPlayer2Paintings([...player2Paintings, { id: paintingId, value: randomValue }]);
       }
-    }
+    }*/
 
     socket.emit('newPainting', {
       roomNo,
       paintingId: newId,
-      paintingValue: randomValue
+      paintingValue: randomValue,
+      usedPaintingIds: [...usedPaintingIds, newId]
     });
     
-    socket.on('receiveNewPainting', ({ paintingId, paintingValue }) => {
+    socket.on('receiveNewPainting', ({ paintingId, paintingValue, usedPaintingIds }) => {
       // Update the UI with the new painting information
       setPaintingId(paintingId);
       setPaintingValue(paintingValue);
+      setUsedPaintingIds(usedPaintingIds)
 
       // Dynamically import the image based on the new painting id
       import(`../../paintings/painting${paintingId}.jpeg`)
@@ -182,7 +185,6 @@ const Game = () => {
   
     // Emit player data to the server
     if(player){
-      console.log("newB",newBalance)
     socket.emit('sendPlayerData', {
       roomNo,
       player,

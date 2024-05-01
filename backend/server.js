@@ -52,8 +52,9 @@ io.on("connection", (socket) => {
     io.to(roomNo).emit('updateBid', { playerName: nextPlayer, amount })
   })
 
-  socket.on('sendPlayerData', ({ roomNo, player, balance, paintings, usedPaintingIds}) => {
-    console.log(balance)
+ 
+
+  socket.on('sendPlayerData', ({ roomNo, player, balance, paintings}) => {
     const otherPlayer = player === 'player1' ? 'player2' : 'player1';
     const bidBalance = 0;
     if (rooms[roomNo]) {
@@ -79,7 +80,8 @@ io.on("connection", (socket) => {
         /*if (usedPaintingIds.length === 9) {
             determineWinnerAndBroadcast(roomNo)
         }*/
-    }
+      }
+      
     
   })
 
@@ -106,11 +108,17 @@ io.on("connection", (socket) => {
     io.to(roomNo).emit("gameResult", { winner });
   }
   
+  const usedPaintings = []
   
-  
-  socket.on('newPainting', ({ roomNo, paintingId, paintingValue }) => {
+  socket.on('newPainting', ({ roomNo, paintingId, paintingValue, usedPaintingIds }) => {
     // Broadcast the new painting to all players in the room
-    io.to(roomNo).emit('receiveNewPainting', { paintingId, paintingValue });
+    /*usedPaintings.push(usedPaintingIds)
+      io.to(roomNo).emit("usedPaintings", {usedPaintings})*/
+      console.log("Used Painting Ids:", usedPaintingIds);
+      /*rooms[roomNo].usedPaintingIds = usedPaintingIds;*/
+
+    io.to(roomNo).emit('receiveNewPainting', { paintingId, paintingValue, usedPaintingIds });
+    
   })
 })
 
